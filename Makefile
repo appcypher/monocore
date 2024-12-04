@@ -63,6 +63,7 @@ install: build
 	install -d $(DESTDIR)$(PREFIX)/bin
 	sudo install -m 755 $(MONOCORE_RELEASE_BIN) $(DESTDIR)$(PREFIX)/bin/monocore
 	sudo install -m 755 $(MONOKRUN_RELEASE_BIN) $(DESTDIR)$(PREFIX)/bin/monokrun
+	sudo ln -sf $(DESTDIR)$(PREFIX)/bin/monocore $(DESTDIR)$(PREFIX)/bin/mc
 
 # Clean build artifacts
 clean:

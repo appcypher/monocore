@@ -23,5 +23,6 @@ commit-msg.txt
 pr.md
 pr.txt
 
-# monocore.toml
+# monocore config files
 monocore.toml
+monocore.json

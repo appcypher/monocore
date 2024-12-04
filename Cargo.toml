@@ -21,14 +21,14 @@ license = "Apache-2.0"
 edition = "2021"
 
 [workspace.dependencies]
-async-stream = "0.3.5"
+async-stream = "0.3"
 async-trait = "0.1"
 dirs = "5.0"
 hex = "0.4"
 libc = "0.2"
 axum = "0.7.9"
-bytes = "1.8.0"
-libipld = "0.16.0"
+bytes = "1.8"
+libipld = "0.16"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 structstruck = "0.4"
@@ -47,13 +47,14 @@ getset = "0.1"
 lazy_static = "1.5"
 procspawn = "1.0"
 reqwest = { version = "0.12", features = ["stream", "json"] }
-reqwest-middleware = "0.3"
-reqwest-retry = "0.6"
+reqwest-middleware = "0.4"
+reqwest-retry = "0.7"
 monoutils-store = { path = "./monoutils-store" }
 chrono = { version = "0.4", features = ["serde"] }
 criterion = "0.5"
 test-log = "0.2"
-typed-path = "0.9"
+typed-path = "0.10"
 toml = "0.8"
 typed-builder = "0.20"
 uuid = { version = "1.11", features = ["v4"] }
+pretty-error-debug = "0.3"

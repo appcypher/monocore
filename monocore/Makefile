@@ -20,7 +20,7 @@ DARWIN_LIB_PATH := /usr/local/lib
 LINUX_LIB_PATH := /usr/local/lib64
 
 # Phony targets
-.PHONY: all install clean example bench monokrun bin _run_bin monocore deps
+.PHONY: all clean example bench monokrun bin _run_bin monocore deps
 
 # Default target
 all: monocore
@@ -32,7 +32,7 @@ $(MONOCORE_RELEASE_BIN): deps
 	@mkdir -p $(BUILD_DIR)
 ifeq ($(OS),Darwin)
 	cargo build --release --bin monocore $(FEATURES)
-	codesign --entitlements monocore/monocore.entitlements --force -s - $@
+	codesign --entitlements monocore.entitlements --force -s - $@
 else
 	RUSTFLAGS="-C link-args=-Wl,-rpath,$(LINUX_LIB_PATH)" cargo build --release --bin monocore $(FEATURES)
 ifdef OVERLAYFS
@@ -43,19 +43,13 @@ endif
 $(MONOKRUN_RELEASE_BIN): deps
 ifeq ($(OS),Darwin)
 	cargo build --release --bin monokrun $(FEATURES)
-	codesign --entitlements monocore/monocore.entitlements --force -s - $@
+	codesign --entitlements monocore.entitlements --force -s - $@
 else
 	RUSTFLAGS="-C link-args=-Wl,-rpath,$(LINUX_LIB_PATH)" cargo build --release --bin monokrun $(FEATURES)
 ifdef OVERLAYFS
 	sudo setcap cap_sys_admin+ep $@
 endif
 endif
-
-# Install the binaries
-install: $(MONOCORE_RELEASE_BIN) $(MONOKRUN_RELEASE_BIN)
-	install -d $(DESTDIR)$(PREFIX)/bin
-	install -m 755 $(MONOCORE_RELEASE_BIN) $(DESTDIR)$(PREFIX)/bin/monocore
-	install -m 755 $(MONOKRUN_RELEASE_BIN) $(DESTDIR)$(PREFIX)/bin/monokrun
 
 # Clean build artifacts
 clean:
