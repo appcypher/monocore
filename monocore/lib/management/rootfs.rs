@@ -1,3 +1,9 @@
+//! Root filesystem management for Monocore sandboxes.
+//!
+//! This module provides functionality for managing root filesystems used by Monocore sandboxes.
+//! It handles the creation, extraction, and merging of filesystem layers following OCI (Open
+//! Container Initiative) specifications.
+
 use async_recursion::async_recursion;
 use chrono::{TimeZone, Utc};
 use ipldstore::{
@@ -9,13 +15,15 @@ use monofs::filesystem::{
     UNIX_MTIME_KEY, UNIX_UID_KEY,
 };
 use std::{
+    borrow::Cow,
+    collections::HashMap,
     fs,
     os::unix::fs::{MetadataExt, PermissionsExt},
     path::Path,
 };
 use tokio::{fs::File as TokioFile, io::BufReader};
 
-use crate::MonocoreResult;
+use crate::{utils::SANDBOX_SCRIPT_DIR, MonocoreResult};
 
 //--------------------------------------------------------------------------------------------------
 // Constants
@@ -355,6 +363,56 @@ where
     metadata
         .set_attribute(UNIX_MTIME_KEY, Ipld::String(mtime.to_rfc3339()))
         .await?;
+
+    Ok(())
+}
+
+/// Patches a native rootfs by adding sandbox script files to a `.sandbox_scripts` directory.
+///
+/// This function:
+/// 1. Creates a `.sandbox_scripts` directory under the rootfs if it doesn't exist
+/// 2. For each script in the provided HashMap, creates a file with the given name
+/// 3. Adds a shebang line using the provided shell path
+/// 4. Makes the script files executable (rwxr-x---)
+/// 5. Creates a `shell` script containing just the shell path
+///
+/// ## Arguments
+///
+/// * `root_path` - Path to the root of the filesystem to patch
+/// * `scripts` - HashMap containing script names and their contents
+/// * `shell_path` - Path to the shell binary within the rootfs (e.g. "/bin/sh")
+///
+/// ## Returns
+///
+/// Returns `MonocoreResult<()>` indicating success or failure
+pub fn patch_native_rootfs_with_scripts(
+    root_path: impl AsRef<Path>,
+    scripts: Cow<HashMap<String, String>>,
+    shell_path: impl AsRef<Path>,
+) -> MonocoreResult<()> {
+    // Create scripts directory
+    let script_dir = root_path.as_ref().join(SANDBOX_SCRIPT_DIR);
+    fs::create_dir_all(&script_dir)?;
+
+    // Get shell path as string for shebang
+    let shell_path = shell_path.as_ref().to_string_lossy();
+
+    for (script_name, script_content) in scripts.iter() {
+        // Create script file path
+        let script_path = script_dir.join(script_name);
+
+        // Write shebang and content
+        let full_content = format!("#!{}\n{}", shell_path, script_content);
+        fs::write(&script_path, full_content)?;
+
+        // Make executable for user and group (rwxr-x---)
+        fs::set_permissions(&script_path, fs::Permissions::from_mode(0o750))?;
+    }
+
+    // Create shell script containing just the shell path
+    let shell_script_path = script_dir.join("shell");
+    fs::write(&shell_script_path, shell_path.to_string())?;
+    fs::set_permissions(&shell_script_path, fs::Permissions::from_mode(0o750))?;
 
     Ok(())
 }
